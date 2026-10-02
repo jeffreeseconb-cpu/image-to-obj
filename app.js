@@ -24,6 +24,7 @@ let activeImage = null;
 let imageUrl = '';
 let currentObjText = '';
 let currentViewData = null;
+let imageLoaded = false;
 
 const pipelineSteps = [
   'Load image',
@@ -52,6 +53,7 @@ function updatePipelineState(stageIndex) {
 
 function attachFile(file) {
   if (!file || !file.type.startsWith('image/')) {
+    alert('Please select a valid image file');
     return;
   }
 
@@ -60,12 +62,19 @@ function attachFile(file) {
   }
 
   imageUrl = URL.createObjectURL(file);
+  imageLoaded = false;
   activeImage = new Image();
   activeImage.onload = () => {
+    imageLoaded = true;
     uploadPreview.src = imageUrl;
     uploadPreviewWrap.classList.remove('hidden');
     fileName.textContent = file.name;
     convertBtn.disabled = false;
+    console.log('Image loaded successfully:', activeImage.naturalWidth, 'x', activeImage.naturalHeight);
+  };
+  activeImage.onerror = () => {
+    alert('Failed to load image. Please try another file.');
+    console.error('Image failed to load');
   };
   activeImage.src = imageUrl;
 }
@@ -83,6 +92,7 @@ clearFileBtn.addEventListener('click', () => {
     imageUrl = '';
   }
   activeImage = null;
+  imageLoaded = false;
   uploadPreview.src = '';
   uploadPreviewWrap.classList.add('hidden');
   fileName.textContent = 'No file selected';
@@ -162,25 +172,7 @@ function renderTView(canvas, img, viewType) {
   drawRoundedRect(ctx, headX, headY, headW, headH, 26);
   ctx.fill();
 
-  const mat = viewType === 'back' ? 'scale(-1, 1)' : viewType === 'left' ? 'scale(1,1)' : viewType === 'right' ? 'scale(-1,1)' : 'scale(1,1)';
   const isMirror = viewType === 'back' || viewType === 'right';
-
-  const clampX = (sourceX, sourceY, sourceW, sourceH, targetX, targetY, targetW, targetH) => {
-    ctx.save();
-    if (isMirror) {
-      ctx.translate(targetX + targetW, targetY);
-      ctx.scale(-1, 1);
-      ctx.drawImage(sourceX, sourceY, sourceW, sourceH, 0, 0, targetW, targetH);
-    } else {
-      ctx.drawImage(sourceX, sourceY, sourceW, sourceH, targetX, targetY, targetW, targetH);
-    }
-    ctx.restore();
-  };
-
-  const textureClipX = 0;
-  const textureClipY = 0;
-  const textureClipW = img.naturalWidth;
-  const textureClipH = img.naturalHeight;
 
   const drawMappedTexture = (tx, ty, tw, th, x, y, w, h) => {
     if (isMirror) {
@@ -348,41 +340,51 @@ function showResultSet(viewMap) {
   zipDownload.download = 'image-to-obj-assets.zip';
 
   resultsSection.classList.remove('hidden');
+  window.scrollTo({ top: resultsSection.offsetTop - 100, behavior: 'smooth' });
 }
 
 function processImage() {
-  if (!activeImage) {
+  if (!activeImage || !imageLoaded) {
+    alert('Please wait for the image to load completely before clicking Done.');
+    console.warn('Image not ready:', { activeImage, imageLoaded });
     return;
   }
 
+  console.log('Starting image processing...');
   setProgress(10);
   updatePipelineState(1);
 
-  const viewNames = ['front', 'back', 'left', 'right'];
-  const viewMap = {};
+  try {
+    const viewNames = ['front', 'back', 'left', 'right'];
+    const viewMap = {};
 
-  viewNames.forEach((viewName, index) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 820;
-    const context = canvas.getContext('2d');
-    renderTView(canvas, activeImage, viewName);
-    viewMap[viewName] = canvas;
+    viewNames.forEach((viewName, index) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 820;
+      const context = canvas.getContext('2d');
+      renderTView(canvas, activeImage, viewName);
+      viewMap[viewName] = canvas;
 
-    const complete = ((index + 1) / viewNames.length) * 100;
-    setProgress(15 + complete * 0.55);
-  });
+      const complete = ((index + 1) / viewNames.length) * 100;
+      setProgress(15 + complete * 0.55);
+    });
 
-  setProgress(70);
-  updatePipelineState(2);
+    setProgress(70);
+    updatePipelineState(2);
 
-  currentViewData = viewMap;
-  showResultSet(viewMap);
+    currentViewData = viewMap;
+    showResultSet(viewMap);
 
-  setTimeout(() => {
-    setProgress(100);
-    updatePipelineState(3);
-  }, 200);
+    setTimeout(() => {
+      setProgress(100);
+      updatePipelineState(3);
+      console.log('Processing complete!');
+    }, 200);
+  } catch (error) {
+    alert('Error processing image: ' + error.message);
+    console.error('Processing error:', error);
+  }
 }
 
 convertBtn.addEventListener('click', processImage);
