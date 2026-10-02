@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image to OBJ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">I</div>
+          <div>
+            <div class="brand-name">Image to OBJ</div>
+            <div class="brand-tag">AI-generated 3D T-pose conversion</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="hero">
+        <section class="panel upload-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Upload</p>
+            <h1>Turn a single image into a 3D OBJ</h1>
+          </div>
+
+          <div class="dropzone" id="dropzone" aria-label="Image upload area">
+            <input id="imageInput" type="file" accept="image/*" />
+            <div class="dropzone-content">
+              <div class="upload-icon">+</div>
+              <p class="drop-title">Drop your image here</p>
+              <p class="drop-subtitle">or click to browse</p>
+            </div>
+          </div>
+
+          <div class="upload-preview hidden" id="uploadPreviewWrap">
+            <img id="uploadPreview" alt="Selected preview" />
+            <div class="preview-meta">
+              <span id="fileName">No file selected</span>
+              <button id="clearFileBtn" class="ghost-button" type="button">Remove</button>
+            </div>
+          </div>
+
+          <button id="convertBtn" class="primary-button" type="button" disabled>
+            Done
+          </button>
+        </section>
+
+        <section class="panel status-panel">
+          <div class="panel-header compact">
+            <p class="eyebrow">Status</p>
+            <h2>Render pipeline</h2>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-header">
+              <span>Processing</span>
+              <span id="progressText">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <ol class="pipeline-list">
+            <li class="done">Load image</li>
+            <li class="active">Generate 4-view T-pose</li>
+            <li>Build OBJ mesh</li>
+            <li>Download assets</li>
+          </ol>
+        </section>
+      </main>
+
+      <section class="results hidden" id="resultsSection">
+        <div class="section-header">
+          <p class="eyebrow">Output</p>
+          <h2>Your 3D model is ready</h2>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Front</h3>
+            <canvas id="frontCanvas" width="320" height="420"></canvas>
+            <a id="frontDownload" class="download-link" download="front-view.png">Download front</a>
+          </div>
+
+          <div class="result-card">
+            <h3>Back</h3>
+            <canvas id="backCanvas" width="320" height="420"></canvas>
+            <a id="backDownload" class="download-link" download="back-view.png">Download back</a>
+          </div>
+
+          <div class="result-card">
+            <h3>Left</h3>
+            <canvas id="leftCanvas" width="320" height="420"></canvas>
+            <a id="leftDownload" class="download-link" download="left-view.png">Download left</a>
+          </div>
+
+          <div class="result-card">
+            <h3>Right</h3>
+            <canvas id="rightCanvas" width="320" height="420"></canvas>
+            <a id="rightDownload" class="download-link" download="right-view.png">Download right</a>
+          </div>
+        </div>
+
+        <div class="model-card">
+          <div>
+            <p class="eyebrow">OBJ</p>
+            <h3>Download model</h3>
+          </div>
+          <div class="model-actions">
+            <a id="objDownload" class="primary-button small" download="model.obj">Download OBJ</a>
+            <a id="zipDownload" class="ghost-button small" download="image-to-obj-assets.zip">Download all</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
